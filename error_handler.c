@@ -35,7 +35,7 @@ void _error_handler(int status, int err, char **argv)
  * @err: line counter
  * @argv: buffer containing the tokens
  */
-/*void _print_base_error(int err, char **argv)
+void _print_base_error(int err, char **argv)
 {
 	_puts(program_invocation_name);
 	_puts(": ");

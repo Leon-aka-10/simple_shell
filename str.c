@@ -56,7 +56,7 @@ int _strcmp(char *s1, char *s2)
  * @src: source.
  * Return: the pointer to dest.
  */
-/*char *_strcpy(char *dest, char *src)
+char *_strcpy(char *dest, char *src)
 {
 	int a = -1;
 
@@ -66,13 +66,13 @@ int _strcmp(char *s1, char *s2)
 	} while (src[a] != '\0');
 
 	return (dest);
-}*/
+}
 /**
  * _strdup - gives a pointer to memory space
  * @str: string
  * Return: pointer
  */
-/*char *_strdup(char *str)
+char *_strdup(char *str)
 {
 	char *s;
 
@@ -94,7 +94,7 @@ int _strcmp(char *s1, char *s2)
 
 	s[size] = '\0';
 	return (s);
-}*/
+}
 /**
  * _strlen - len of string
  * Return: length of string

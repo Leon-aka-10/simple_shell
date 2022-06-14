@@ -48,7 +48,7 @@ char *_strtok(char *s, char *del);
 
 void _error_handler(int status, int err, char **argv);
 void _print_base_error(int err, char **argv);
-/* 
+ 
 char *_strcat(char *str1, char *str2);
 int _strcmp(char *s1, char *s2);
 char *_strcpy(char *dest, char *src);
@@ -66,6 +66,6 @@ int shell_launch(char **argv);
 void _freeall(char **argv, char **path);
 int check_existence(char *path);
 
-void print_number(int n);*/
+void print_number(int n);
 
 #endif
