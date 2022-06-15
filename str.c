@@ -48,6 +48,26 @@ int _strcmp(char *s1, char *s2)
 	}
 	return (j);
 }
+
+/**
+ * _strncmp - compares two strings and returns their difference
+ * @s1: the first string
+ * @s2: the second string
+ * @bytes: number of bytes to compare
+ * Return: number of bytes that differ
+ */
+int _strncmp(char *s1, char *s2, size_t bytes)
+{
+	unsigned int i;
+
+	if (s1 == NULL || s2 == NULL)
+		return (-1);
+
+	for (i = 0; s1[i] && s2[i] && s2[i] == s1[i] && i < bytes - 1; i++)
+		;
+	return (s2[i] - s1[i]);
+}
+
 /**
  * _strcpy - copies the string pointed to by src,
  * including the terminating null byte, to the
@@ -66,47 +86,4 @@ char *_strcpy(char *dest, char *src)
 	} while (src[a] != '\0');
 
 	return (dest);
-}
-/**
- * _strdup - gives a pointer to memory space
- * @str: string
- * Return: pointer
- */
-char *_strdup(char *str)
-{
-	char *s;
-
-	unsigned int size = 0, i;
-
-	if (!str)
-		return (NULL);
-
-	while (str[size])
-		size++;
-
-	s = malloc(sizeof(char) * (size + 1));
-
-	if (!s)
-		return (NULL);
-
-	for (i = 0; i < size; i++)
-		s[i] = str[i];
-
-	s[size] = '\0';
-	return (s);
-}
-/**
- * _strlen - len of string
- * Return: length of string
- * @s: string
- */
-int _strlen(char *s)
-{
-	int length = 0;
-
-	while (*(s + length) != '\0')
-	{
-		length++;
-	}
-	return (length);
 }
