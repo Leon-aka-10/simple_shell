@@ -1,127 +1,108 @@
 #include "shell.h"
 /**
- * _getenv - gets the environ variable
- * @name: name of the env variable to look for
- * Return: pointer to the env variable
- **/
+ * _getenv - gets the environmental variable as user defines
+ * @name: name of environmental variable
+ * Return: environmental variable if sucessful, NULL otherwise
+*/
+
+
 char *_getenv(char *name)
 {
-	int i = 0;
-	char *token, *deli = "=";
-	char *dup;
+	int index, len;
+	/*extern char **environ;*/
 
-	while (environ[i] != NULL)
+	len = _strlen(name);
+	for (index = 0; environ[index]; index++)
 	{
-		dup = _strdup(environ[i]);
-		token = _strtok(environ[i], deli);
-		if (_strcmp(token, name) == 0)
-		{
-			token = _strtok(NULL, deli);
-			environ[i] = _strcpy(environ[i], dup);
-			free(dup);
-			return (token);
-		}
-		environ[i] = _strcpy(environ[i], dup);
-		free(dup);
-		i++;
+		if (_strncmp(name, environ[index], len) == 0)
+			return (environ[index]);
 	}
+
+	return (NULL);
+
+}
+
+
+/**
+  * _setenv - sets environmental variables as user defines
+  * @tokens: KEY=VALUE pair
+  * Return: 0 on success, -1 on failure
+*/
+
+int _setenv(char **tokens)
+{
+	int i, status, wc;
+	char *key, *value;
+
+	for (i = 0, wc = 1; tokens[1][i]; i++)
+		if (tokens[1][i] == '=')
+			wc++;
+	for (i = 0; tokens[i]; i++)
+		;
+	if (!tokens[1] || i == 0 || wc != 2)
+	{
+		_puts("setenv: Usage: setenv KEY=VALUE\n");
+		return (-1);
+	}
+	key = strtok(tokens[1], "=");
+	value = strtok(NULL, "=");
+	status = setenv(key, value, 0);
+	if (status == 0)
+		return (status);
+	return (-1);
+}
+
+/**
+  * _unsetenv - unsets environmental variables as user defines
+  * @tokens: KEY=VALUE pair
+  * Return: 0 on success, -1 on failure
+*/
+
+int _unsetenv(char **tokens)
+{
+	int i, status, wc;
+	char *key;
+
+	for (i = 0, wc = 1; tokens[1][i]; i++)
+		if (tokens[1][i] == '=')
+			wc++;
+	for (i = 0; tokens[i]; i++)
+		;
+	if (!tokens[1] || i == 0 || wc != 2)
+	{
+		_puts("unsetenv: Usage: unsetenv KEY=VALUE\n");
+		return (-1);
+	}
+	key = strtok(tokens[1], "=");
+	/*value = strtok(NULL, "=");*/
+	status = unsetenv(key);
+	if (status == 0)
+		return (status);
+	return (-1);
+}
+
+
+/**
+  * _printenv - prints out the current environment
+  * @tokens: tokenized strings
+  * @environment: linked list environment
+i  * Return: 0 on success, -1 on catastrophic failure
+*/
+
+int _printenv(char **tokens, list_t *environment)
+{
+	char **envir;
+
+	if (tokens[1])
+		_puts("No arguments are necessary\n");
+	envir = environ;
+	if (!envir || !environ)
+		return (-1);
+	for ( ; *envir; envir++)
+	{
+		write(STDOUT_FILENO, *envir, _strlen(*envir));
+		write(STDOUT_FILENO, "\n", 1);
+	}
+	environment++;
 	return (0);
-}
-/**
- * _printenv - prints the enviroment
- * @argv: pointer to the commands
- * Return: 1 on success
- */
-int _printenv(char **argv)
-{
-	int i;
-	(void) argv;
-
-	for (i = 0; environ[i] != NULL; i++)
-	{
-		_puts(environ[i]);
-		_puts("\n");
-	}
-	return (0);
-}
-/**
- * _setenv - sets a new enviromental variable
- * @argv: pointer to the input commands
- * Return: 1 on success
- */
-int _setenv(char **argv)
-{
-	int status = EXIT_SUCCESS, exist = 0, i = 0;
-	char *dup = 0, *tok = 0, *val = 0;
-
-	while (environ[i])
-	{
-		dup = _strdup(environ[i]);
-		tok = _strtok(dup, "=");
-		if (!_strcmp(tok, argv[1]))
-		{
-			tok = _strcat(argv[1], "=");
-			val = _strcat(tok, argv[2]);
-
-			environ[i] = _strcpy(environ[i], val);
-			free(tok);
-			free(val);
-			exist = 1;
-		}
-		free(dup);
-		i++;
-	}
-
-	/* if the variable does not exist then create it */
-
-	if (!exist)
-	{
-		/* not implemented */
-	}
-
-	return (status);
-}
-/**
- * _unsetenv - unsets an enviromental var
- * @argv: pointer to the buffer with the command line
- * Return: 1 on success
- */
-int _unsetenv(char **argv)
-{
-	int i = 0, exist = 0, len = 0, j = 0;
-	char *tok, *copy;
-	char **new_env;
-
-	while (environ[i])
-	{
-		copy = _strdup(environ[i]);
-		tok = _strtok(copy, "=");
-		if (!_strcmp(tok, argv[1]))
-		{
-			exist = 1;
-		}
-		len++;
-		i++;
-		free(copy);
-	}
-
-	if (exist)
-	{
-		new_env = malloc(sizeof(char *) * (len - 1));
-		for (i = 0; i < len; i++)
-		{
-			copy = _strdup(environ[i]);
-			tok = _strtok(copy, "=");
-			if (!_strcmp(tok, argv[1]))
-			{
-				printf("-------------> Removing: %s\n", environ[i]);
-				continue;
-			}
-			new_env[j] = environ[i];
-			j++;
-		}
-		new_env[len - 1] = NULL;
-		environ = new_env;
-	}
-	return (1);
 }

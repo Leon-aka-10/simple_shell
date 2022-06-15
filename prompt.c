@@ -2,110 +2,50 @@
 
 /**
  * main - integrates the functions to make the shell work
+ * @ac: number of arguments
+ * @av: argument list
  * Return: 0 on success
  */
-int main(void)
+int main(int ac __attribute__((unused)), char **av)
 {
-	char *buffer = NULL, **argv = NULL;
-	int flag = 1, err_count = 0;
-	int status = EXIT_SUCCESS;
+	char *buffer;
+	list_t *linkedlist_path;
+	int characters;
+	char **commands;
+	size_t bufsize = BUFSIZE;
 
-	built_in_t built_in_arr[] = {
-		{"exit", ourexit},
-		{"env", _printenv},
-		{"setenv", _setenv},
-		{"unsetenv", _unsetenv},
-		{"cd", _cd},
-		{NULL, NULL}
-	};
-
-	if (isatty(STDIN_FILENO) != 1)
+	if (ac >= 2)
 	{
-		_non_int(built_in_arr);
+		if (execve(av[1], av, NULL) == -1)
+		{
+			perror(av[0]);
+			exit(-1);
+		}
+		return (0);
 	}
-
-	(void)signal(SIGINT, sign_handler);
-	(void) built_in_arr;
-
-	while (flag)
+	buffer = (char *)malloc(bufsize * sizeof(char));
+	if (buffer == NULL)
 	{
-		_puts("$ ");
-
-		err_count++;
-
-		buffer = read_line();
-
-		argv = token_buffer(buffer, " \t\r\n\a");
-
-		status = shell_exec(argv, built_in_arr);
-
-		/*printf("------>status: %d\n", status);*/
-
-		_error_handler(status, err_count, argv);
-		free(argv);
-		free(buffer);
+		perror("Unable to allocate buffer");
+		exit(1);
 	}
-	return (status);
-}
-/**
- * token_buffer - splits the buffer into tokens
- * @buffer: pointer to the buffer
- * @delimit: delimitator chosen
- * Return: double pointer to the tokens
- **/
-char **token_buffer(char *buffer, char *delimit)
-{
-	int buffsize = 64, iter = 0;
-	char **tokens = malloc(sizeof(char *) * (buffsize));
-	char *stoken;
-
-	if (!tokens)
-	{
-		perror("Not possible to allocate memory");
-		free(buffer);
-		exit(98);
-	}
-	stoken = _strtok(buffer, delimit);
-	while (stoken)
-	{
-		tokens[iter] = stoken;
-		iter++;
-		stoken = _strtok(NULL, delimit);
-	}
-	tokens[iter] = NULL;
-	return (tokens);
-}
-
-/**
- * read_line - read input form stdin
- * Return: pointer to buffer read
- */
-
-char *read_line()
-{
-	char *buffer = NULL;
-	size_t len = 1024;
-	int read;
-
-	read = getline(&buffer, &len, stdin);
-	if (read == EOF)
-	{
-		_puts("\n");
-		free(buffer);
-		exit(EXIT_SUCCESS);
-	}
-	buffer[_strlen(buffer) - 1] = '\0';
-	return (buffer);
-}
-
-/**
- * sign_handler - handles the abscensce of a sign
- * @sig: integer
- */
-void sign_handler(int sig)
-{
-	(void) sig;
-	_puts("\n");
-	_puts("$ ");
-	fflush(stdout);
+	linkedlist_path = path_list();
+	do {
+		write(STDOUT_FILENO, "~$ ", 3);
+		characters = getline(&buffer, &bufsize, stdin);
+		commands = split_line(buffer);
+		if (!commands)
+			break;
+		if (_builtin(commands[0]))
+			_builtin(commands[0])(commands, linkedlist_path, buffer);
+		else
+			shell_exec(commands, linkedlist_path, av);
+		free(commands);
+		if (characters == EOF)
+		{
+			free(buffer);
+			continue;
+		}
+	} while (1);
+	return (0);
 }

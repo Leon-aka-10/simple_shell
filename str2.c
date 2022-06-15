@@ -43,3 +43,16 @@ int _strlen(char *s)
 	}
 	return (length);
 }
+
+/**
+ * _isnumber - checks if chars are digits
+ * @c: char to check
+ * Return: 1 if yes, 0 if no
+ */
+int _isnumber(int c)
+{
+	if (c >= '0' && c <= '9')
+		return (1);
+	else
+		return (0);
+}

@@ -1,96 +1,94 @@
 #include "shell.h"
 /**
- * shell_exec - executes the built in commands
- * @argv: pointer to the argv
- * @built_in_arr: pointer to the struct with built in comm
- * Return: 1 on success
- **/
-int shell_exec(char **argv, built_in_t built_in_arr[])
+ * split_line - splits the data from standard input
+ * @line: data from standard input
+ * Return: an array of pointers if successful
+*/
+
+char **split_line(char *line)
 {
-	int i = 0;
+	int bufsize = 1024, position = 0;
+	char *delimeter =  " \t\r\n\a";
+	char **tokens = malloc(bufsize * sizeof(char *));
+	char *token;
+	char *s = malloc(bufsize * sizeof(char));
 
-	if (argv[0] == NULL)
-		return (1);
+	_strcpy(s, line);
 
-	while (i < 5)
+	if (!tokens)
 	{
-		if (_strcmp(argv[0], built_in_arr[i].command) == 0)
-		{
-			return (built_in_arr[i].f(argv));
-		}
-		i++;
+		perror("allocation error");
+		exit(1);
 	}
-	return (shell_launch(argv));
-}
-/**
- * shell_launch - creates the process to execute shell commands
- * @argv: pointer to argv
- * Return: 1 on success
- */
-int shell_launch(char **argv)
-{
-	int pid, existence, current_path = 0, c, status;
-	char **path = 0, *command = 0, *path_command = 0, *env = 0;
 
-	pid = fork();
-	if (pid == 0)
+	token = strtok(s, delimeter);
+	/*free(s);*/
+	while (token != NULL)
 	{
-		env = _getenv("PATH");
-		if (env && env[0] == ':')
-			current_path = 1;
-		path = token_buffer(env, ":");
-		for (c = 0; path[c]; c++)
+		tokens[position] = token;
+		position++;
+
+		if (position >= bufsize)
 		{
-			command = _strcat("/", argv[0]);
-			path_command = _strcat(path[c], command);
-			existence = check_existence(path_command);
-			if (existence != -1 && !current_path)
+			bufsize += 1024;
+			tokens = _realloc(*tokens, token[position], bufsize * sizeof(char *));
+			if (!tokens)
 			{
-				argv[0] = path_command;
-				break;
+				perror("allocation error");
+				exit(1);
 			}
-			else
-				free(path_command);
-			free(command);
 		}
 
-		existence = check_existence(argv[0]);
-
-		if (existence == -1)
-			_freeall(argv, path);
-
-		if (execve(argv[0], argv, environ) == -1)
-			perror("Error");
-		_freeall(argv, path);
+		token = strtok(NULL, delimeter);
+		/*free(tokens);*/
+		/*free_double_ptr(tokens);*/
 	}
-	else if (pid < 0)
-		perror("hsh");
-	else
-		wait(&status);
-	return (WEXITSTATUS(status));
+	tokens[position] = NULL;
+	return (tokens);
 }
-/**
- * _freeall - frees arv and path
- * @argv: Buffer containing the tokens
- * @path: path to look for exec files
- */
-void _freeall(char **argv, char **path)
-{
-	free(argv[0]);
-	free(argv);
-	free(path);
-	exit(127);
-}
-/**
- * check_existence - checkes whether a file exists
- * @path: pointer to the path to search in
- * Return: 1 on success, -1 if failed
- */
-int check_existence(char *path)
-{
-	int fd = access(path, F_OK | X_OK);
 
-	if (fd == -1)
-		return (-1);
-	return (1);
+
+/**
+  * shell_exec - executes a command
+  * @argv: array of tokens, ie. argument vectors
+  * @av: cmd argument list
+  * @linkedlist_path: PATH in LL form
+  * Return: 0 on success, -1 on failure
+  */
+void shell_exec(char *argv[], list_t *linkedlist_path, char **av)
+{
+	pid_t child_pid;
+	char *abs_path;
+	int status;
+
+	execve(argv[0], argv, NULL);
+
+	abs_path = _which(argv[0], linkedlist_path);
+
+	if (!abs_path)
+	{
+		perror(av[0]);
+		return;
+	}
+	else
+	{
+		child_pid = fork();
+		if (child_pid == -1)
+		{
+			perror("Error:");
+			exit(1);
+		}
+		if (child_pid == 0)
+		{
+			if (execve(abs_path, argv, environ) == -1)
+			{
+				perror("execution failed\n");
+				__exit(argv, linkedlist_path);
+			}
+		}
+		else
+		{
+			wait(&status);
+		}
+	}
 }

@@ -1,76 +1,122 @@
 #include "shell.h"
 
 /**
- * ourexit - checks whether the input is the exit command
- * @argv: buffer with the commands
- * Return: Exit status
- */
-int ourexit(char **argv)
+  * _builtin - checks if cmd is a builtin
+  * @cmd: command to find
+  * Return: On success - pointer to function, On Failure - NULL pointer
+*/
+int (*_builtin(char *cmd))()
 {
-	int status = 0, i;
+	unsigned int i;
+	builtin_t builds[] = {
+		{"alias", _alias},
+		{"cd", _cd},
+		{"env", _printenv},
+		{"exit", ourexit},
+		{"history", _history},
+		{"setenv", _setenv},
+		{"unsetenv", _unsetenv},
+		{NULL, NULL}
+	};
 
-	if (argv[1] == NULL)
+	i = 0;
+	while (*builds[i].fun != NULL)
 	{
-		free(argv[0]);
-		free(argv);
-		fflush(stdout);
-		exit(status);
+		if (_strncmp(builds[i].cmd_str, cmd, _strlen(builds[i].cmd_str)) == 0)
+			return (builds[i].fun);
+		i++;
 	}
-
-	for (i = 0; argv[1][i] != '\0'; i++)
-	{
-		if (argv[1][i] < 48 || argv[1][i] > 57)
-			return (2);
-	}
-	status = _atoi(argv[1]);
-	free(argv[0]);
-	free(argv);
-	exit(status);
+	return (NULL);
 }
 /**
- * _cd - function that changes the current directory
- * @argv: string containing the input
- * Return: 1 on success
- **/
-int _cd(char **argv)
+  * ourexit - Frees any remaining malloc'd spaces, and exits
+  * @linkedlist_path: Linked list to free.
+  * @buffer: buffer to free
+  * @tokens: Check for other inputs
+  * Return: -1 if exit fails.
+  */
+int ourexit(char **tokens, list_t *linkedlist_path, char *buffer)
 {
-	char buff[1024], *cwd, *new_wd, *comp = "-", *old_pwd;
-	int chint = 0;
-	char *env;
+	unsigned char status;
+	int i;
 
-	cwd = getcwd(buff, sizeof(buff));
-	if (argv[1] == NULL)
+	for (i = 0; tokens[1] && tokens[1][i]; i++)
 	{
-		setenv("OLDPWD", getcwd(buff, sizeof(buff)), 1);
-		env = _getenv("HOME");
-		chdir(env);
-		return (0);
+		if (!(_isnumber(tokens[1][i])))
+		{
+			_puts("numeric argument required, exiting\n");
+			break;
+		}
 	}
-	if (_strcmp(argv[1], comp) == 0)
+	status = tokens[1] && i >= _strlen(tokens[1]) ? _atoi(tokens[1]) : 0;
+	if (linkedlist_path && buffer && tokens)
 	{
-		old_pwd = _getenv("OLDPWD");
-		setenv("OLDPWD", getcwd(buff, sizeof(buff)), 1);
-		chdir(old_pwd);
-		return (0);
+		free_list(linkedlist_path);
+		linkedlist_path = NULL;
+		free(buffer);
+		buffer = NULL;
+		free(tokens);
+		tokens = NULL;
 	}
+	exit(status);
+	return (-1);
+}
 
-	if (!cwd)
-	{
-		free(argv);
-		perror("Error: ");
-		return (1);
-	}
+/**
+  * _cd - changes working directory
+  * @tokens: argument list
+  * Return: 0 on success
+  */
+int _cd(char **tokens)
+{
+	char *target;
+	char pwd[BUFSIZE];
+	char *home;
 
-	chint = chdir(argv[1]);
-
-	if (chint == -1)
+	home = _getenv("HOME");
+	if (tokens[1])
 	{
-		free(argv);
-		perror("Error: ");
-		return (1);
+		if (tokens[1][0] == '~' && !tokens[1][1])
+			target = home;
+		else if (tokens[1][0] == '-' && !tokens[1][1])
+			target = _getenv("OLDPWD");
+		else
+			target = tokens[1];
 	}
+	else
+		target = home;
+	if (target == home)
+		chdir(target);
+	else if (access(target, F_OK | R_OK) == 0)
+		chdir(target);
+	else
+		_puts("Could not find directory\n");
 	setenv("OLDPWD", _getenv("PWD"), 1);
-	new_wd = getcwd(buff, sizeof(buff));
-	setenv("PWD", new_wd, 1);
+	setenv("PWD", getcwd(pwd, sizeof(pwd)), 1);
+	return (0);
+}
+
+
+/**
+  * _alias - sets aliases or prints them out when no options are supplied
+  * Return: 0
+  */
+int _alias(void)
+{
+	_puts("alias: usage: alias [-p] [name[=value] ... ]\n");
+	_puts("\tSet or view aliases.\n\tSet with name=value\n");
+	_puts("\tView list of aliases with no arugments or -p\n");
+	return (0);
+}
+/**
+  * _history - prints out history with no options,
+  *  or clears history with -c
+  * Return: 0 on success, 1 if history cannot be cleared.
+  */
+int _history(void)
+{
+	_puts("history: usage: history [-c]\n");
+	_puts("\tView the history of commands\n ");
+	_puts("\t'history -c' clears the history\n");
 	return (0);
 }
