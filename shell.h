@@ -71,7 +71,7 @@ char *_strdup(char *str);
 int _strlen(char *s);
 int _atoi(char *s);
 
-void shell_exec(char *argv[], list_t *linkedlist_path, char **av);
+int shell_exec(char *argv[], list_t *linkedlist_path);
 char **split_line(char *line);
 
 char *_getenv(char *name);
@@ -91,4 +91,9 @@ void *_realloc(void *ptr, unsigned int old_size, unsigned int new_size);
 void __exit(char **str, list_t *env);
 void free_double_ptr(char **str);
 
+char *c_ignore(char *str);
+void non_int(list_t *env);
+
+void ctrl_c(int n);
+void ctrl_D(int i, char *command, list_t *env);
 #endif
