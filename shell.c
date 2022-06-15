@@ -12,34 +12,34 @@ int main(void)
 	int flag = 1, err_count = 0;
 	int status = EXIT_SUCCESS;
 
-	/* built_in_t built_in_arr[] = {
+        built_in_t built_in_arr[] = {
 		{"exit", ourexit},
 		{"env", _printenv},
 		{"setenv", _setenv},
 		{"unsetenv", _unsetenv},
 		{"cd", _cd},
 		{NULL, NULL}
-	}; */
+	};
 
-	/* if (isatty(STDIN_FILENO) != 1)
+	/*if (isatty(STDIN_FILENO) != 1)
 	{
 		_non_int(built_in_arr);
-	} */
+	}*/
 
-	/*(void)signal(SIGINT, sign_handler);
-	(void) built_in_arr;*/
+	/*(void)signal(SIGINT, sign_handler);*/
+	(void) built_in_arr;
 
 	while (flag)
 	{
-		printf("$ ");
+		_puts("$ ");
 
 		err_count++;
 
 		buffer = read_line();
 
-		/* argv = token_buffer(buffer, " \t\r\n\a"); */
+		argv = token_buffer(buffer, " \t\r\n\a");
 
-		/* status = shell_exec(argv, built_in_arr); */
+		status = shell_exec(argv, built_in_arr);
 
 		/*printf("------>status: %d\n", status);*/
 

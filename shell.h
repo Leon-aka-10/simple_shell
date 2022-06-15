@@ -2,7 +2,7 @@
 #define _SHELL_H_
 
 extern char *program_invocation_name;
-
+extern char **environ;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,5 +67,6 @@ void _freeall(char **argv, char **path);
 int check_existence(char *path);
 
 void print_number(int n);
+void _non_int(built_in_t arr[]);
 
 #endif
