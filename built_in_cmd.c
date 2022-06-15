@@ -31,7 +31,7 @@ int ourexit(char **argv)
  * @argv: string containing the input
  * Return: 1 on success
  **/
-/*int _cd(char **argv)
+int _cd(char **argv)
 {
 	char buff[1024], *cwd, *new_wd, *comp = "-", *old_pwd;
 	int chint = 0;

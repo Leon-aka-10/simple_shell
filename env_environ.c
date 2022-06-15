@@ -32,7 +32,7 @@ char *_getenv(char *name)
  * @argv: pointer to the commands
  * Return: 1 on success
  */
-/*int _printenv(char **argv)
+int _printenv(char **argv)
 {
 	int i;
 	(void) argv;
@@ -43,7 +43,7 @@ char *_getenv(char *name)
 		_puts("\n");
 	}
 	return (0);
-}*/
+}
 /**
  * _setenv - sets a new enviromental variable
  * @argv: pointer to the input commands
@@ -86,7 +86,7 @@ int _setenv(char **argv)
  * @argv: pointer to the buffer with the command line
  * Return: 1 on success
  */
-/*int _unsetenv(char **argv)
+int _unsetenv(char **argv)
 {
 	int i = 0, exist = 0, len = 0, j = 0;
 	char *tok, *copy;

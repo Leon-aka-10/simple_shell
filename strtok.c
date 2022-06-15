@@ -35,7 +35,7 @@ char *_strtok(char *s, char *del)
  * @loc: character to locate
  * Return: pointer to the first occurrence of the character
  */
-/*char *_strchr(char *s, char loc)
+char *_strchr(char *s, char loc)
 {
 	unsigned int a;
 
@@ -51,7 +51,7 @@ char *_strtok(char *s, char *del)
 		return (s + a);
 	}
 	return ('\0');
-}*/
+}
 
 /**
  * _strcspn - gets the length of a prefix substring.

@@ -27,7 +27,7 @@ int shell_exec(char **argv, built_in_t built_in_arr[])
  * @argv: pointer to argv
  * Return: 1 on success
  */
-/*int shell_launch(char **argv)
+int shell_launch(char **argv)
 {
 	int pid, existence, current_path = 0, c, status;
 	char **path = 0, *command = 0, *path_command = 0, *env = 0;
@@ -68,7 +68,7 @@ int shell_exec(char **argv, built_in_t built_in_arr[])
 	else
 		wait(&status);
 	return (WEXITSTATUS(status));
-}*/
+}
 /**
  * _freeall - frees arv and path
  * @argv: Buffer containing the tokens
