@@ -31,8 +31,6 @@ typedef struct built_in
 	int (*f)(char **argv);
 } built_in_t;
 
-int (*_builtin(char *cmd))();
-
 int ourexit(char **argv);
 int _cd(char **argv);
 
@@ -53,7 +51,6 @@ void _print_base_error(int err, char **argv);
 
 char *_strcat(char *str1, char *str2);
 int _strcmp(char *s1, char *s2);
-int _strncmp(char *s1, char *s2, size_t bytes);
 char *_strcpy(char *dest, char *src);
 char *_strdup(char *str);
 int _strlen(char *s);

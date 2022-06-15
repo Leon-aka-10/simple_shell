@@ -1,34 +1,6 @@
 #include "shell.h"
 
 /**
-  * _builtin - checks if cmd is a builtin
-  * @cmd: command to find
-  * Return: On success - pointer to function, On Failure - NULL pointer
-*/
-
-int (*_builtin(char *cmd))()
-{
-	unsigned int i;
-	built_in_t builds[] = {
-		{"exit", ourexit},
-		{"env", _printenv},
-		{"setenv", _setenv},
-		{"unsetenv", _unsetenv},
-		{"cd", _cd},
-		{NULL, NULL}
-	};
-
-
-	i = 0;
-	while (*builds[i].f != NULL)
-	{
-		if (_strncmp(builds[i].command, cmd, _strlen(builds[i].command)) == 0)
-			return (builds[i].f);
-		i++;
-	}
-	return (NULL);
-}
-/**
  * ourexit - checks whether the input is the exit command
  * @argv: buffer with the commands
  * Return: Exit status
@@ -47,7 +19,7 @@ int ourexit(char **argv)
 
 	for (i = 0; argv[1][i] != '\0'; i++)
 	{
-		if (argv[1][i] < '0' || argv[1][i] > '9')
+		if (argv[1][i] < 48 || argv[1][i] > 57)
 			return (2);
 	}
 	status = _atoi(argv[1]);
