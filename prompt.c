@@ -6,7 +6,7 @@
  */
 int main(void)
 {
-	char *buff = NULL, **argv = NULL;
+	char *buffer = NULL, **argv = NULL;
 	int flag = 1, err_count = 0;
 	int status = EXIT_SUCCESS;
 
