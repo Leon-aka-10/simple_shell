@@ -1,108 +1,80 @@
 #include "shell.h"
-/**
- * _getenv - gets the environmental variable as user defines
- * @name: name of environmental variable
- * Return: environmental variable if sucessful, NULL otherwise
-*/
-
-
-char *_getenv(char *name)
-{
-	int index, len;
-	/*extern char **environ;*/
-
-	len = _strlen(name);
-	for (index = 0; environ[index]; index++)
-	{
-		if (_strncmp(name, environ[index], len) == 0)
-			return (environ[index]);
-	}
-
-	return (NULL);
-
-}
-
 
 /**
-  * _setenv - sets environmental variables as user defines
-  * @tokens: KEY=VALUE pair
-  * Return: 0 on success, -1 on failure
-*/
-
-int _setenv(char **tokens)
+ * cmp_env_name - compares env variables names
+ * with the name passed.
+ * @nenv: name of the environment variable
+ * @name: name passed
+ *
+ * Return: 0 if are not equal. Another value if they are.
+ */
+int cmp_env_name(const char *nenv, const char *name)
 {
-	int i, status, wc;
-	char *key, *value;
+	int i;
 
-	for (i = 0, wc = 1; tokens[1][i]; i++)
-		if (tokens[1][i] == '=')
-			wc++;
-	for (i = 0; tokens[i]; i++)
-		;
-	if (!tokens[1] || i == 0 || wc != 2)
+	for (i = 0; nenv[i] != '='; i++)
 	{
-		_puts("setenv: Usage: setenv KEY=VALUE\n");
-		return (-1);
+		if (nenv[i] != name[i])
+		{
+			return (0);
+		}
 	}
-	key = strtok(tokens[1], "=");
-	value = strtok(NULL, "=");
-	status = setenv(key, value, 0);
-	if (status == 0)
-		return (status);
-	return (-1);
+
+	return (i + 1);
 }
 
 /**
-  * _unsetenv - unsets environmental variables as user defines
-  * @tokens: KEY=VALUE pair
-  * Return: 0 on success, -1 on failure
-*/
-
-int _unsetenv(char **tokens)
+ * _getenv - get an environment variable
+ * @name: name of the environment variable
+ * @_environ: environment variable
+ *
+ * Return: value of the environment variable if is found.
+ * In other case, returns NULL.
+ */
+char *_getenv(const char *name, char **_environ)
 {
-	int i, status, wc;
-	char *key;
+	char *ptr_env;
+	int i, mov;
 
-	for (i = 0, wc = 1; tokens[1][i]; i++)
-		if (tokens[1][i] == '=')
-			wc++;
-	for (i = 0; tokens[i]; i++)
-		;
-	if (!tokens[1] || i == 0 || wc != 2)
+	/* Initialize ptr_env value */
+	ptr_env = NULL;
+	mov = 0;
+	/* Compare all environment variables */
+	/* environ is declared in the header file */
+	for (i = 0; _environ[i]; i++)
 	{
-		_puts("unsetenv: Usage: unsetenv KEY=VALUE\n");
-		return (-1);
+		/* If name and env are equal */
+		mov = cmp_env_name(_environ[i], name);
+		if (mov)
+		{
+			ptr_env = _environ[i];
+			break;
+		}
 	}
-	key = strtok(tokens[1], "=");
-	/*value = strtok(NULL, "=");*/
-	status = unsetenv(key);
-	if (status == 0)
-		return (status);
-	return (-1);
+
+	return (ptr_env + mov);
 }
 
-
 /**
-  * _printenv - prints out the current environment
-  * @tokens: tokenized strings
-  * @environment: linked list environment
-i  * Return: 0 on success, -1 on catastrophic failure
-*/
-
-int _printenv(char **tokens, list_t *environment)
+ * _env - prints the evironment variables
+ *
+ * @datash: data relevant.
+ * Return: 1 on success.
+ */
+int _env(data_shell *datash)
 {
-	char **envir;
+	int i, j;
 
-	if (tokens[1])
-		_puts("No arguments are necessary\n");
-	envir = environ;
-	if (!envir || !environ)
-		return (-1);
-	for ( ; *envir; envir++)
+	for (i = 0; datash->_environ[i]; i++)
 	{
-		write(STDOUT_FILENO, *envir, _strlen(*envir));
+
+		for (j = 0; datash->_environ[i][j]; j++)
+			;
+
+		write(STDOUT_FILENO, datash->_environ[i], j);
 		write(STDOUT_FILENO, "\n", 1);
 	}
-	environment++;
-	return (0);
+	datash->status = 0;
+
+	return (1);
 }

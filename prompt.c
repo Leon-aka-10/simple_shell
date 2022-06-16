@@ -1,45 +1,73 @@
 #include "shell.h"
 
 /**
- * main - integrates the functions to make the shell work
- * Return: 0 on success
+ * free_data - frees data structure
+ *
+ * @datash: data structure
+ * Return: no return
  */
-
-int main(void)
-
+void free_data(data_shell *datash)
 {
-	char *buffer, **commands;
-	list_t *linkedlist_path, *env_list;
-	int characters;
-	size_t bufsize = BUFSIZE;
+	unsigned int i;
 
-	buffer = (char *)malloc(bufsize * sizeof(char));
-	if (buffer == NULL)
+	for (i = 0; datash->_environ[i]; i++)
 	{
-		perror("Unable to allocate buffer");
-		exit(1);
+		free(datash->_environ[i]);
 	}
 
-	linkedlist_path = path_list();
-	env_list = environ_list();
-	while (1)
+	free(datash->_environ);
+	free(datash->pid);
+}
+
+/**
+ * set_data - Initialize data structure
+ *
+ * @datash: data structure
+ * @av: argument vector
+ * Return: no return
+ */
+void set_data(data_shell *datash, char **av)
+{
+	unsigned int i;
+
+	datash->av = av;
+	datash->input = NULL;
+	datash->args = NULL;
+	datash->status = 0;
+	datash->counter = 1;
+
+	for (i = 0; environ[i]; i++)
+		;
+
+	datash->_environ = malloc(sizeof(char *) * (i + 1));
+
+	for (i = 0; environ[i]; i++)
 	{
-		if (isatty(STDIN_FILENO))
-			write(STDOUT_FILENO, "$ ", 3);
-		else
-			non_int(env_list);
-
-		signal(SIGINT, ctrl_c);
-		characters = getline(&buffer, &bufsize, stdin);
-		ctrl_D(characters, buffer, env_list);
-
-		commands = split_line(buffer);
-		if (_builtin(commands[0]))
-			_builtin(commands[0])(commands, linkedlist_path, buffer);
-		else
-			shell_exec(commands, linkedlist_path);
-		free(commands);
+		datash->_environ[i] = _strdup(environ[i]);
 	}
 
-	return (0);
+	datash->_environ[i] = NULL;
+	datash->pid = aux_itoa(getpid());
+}
+
+/**
+ * main - Entry point
+ *
+ * @ac: argument count
+ * @av: argument vector
+ *
+ * Return: 0 on success.
+ */
+int main(int ac, char **av)
+{
+	data_shell datash;
+	(void) ac;
+
+	signal(SIGINT, get_sigint);
+	set_data(&datash, av);
+	shell_loop(&datash);
+	free_data(&datash);
+	if (datash.status < 0)
+		return (255);
+	return (datash.status);
 }

@@ -1,122 +1,192 @@
 #include "shell.h"
 
 /**
-  * _builtin - checks if cmd is a builtin
-  * @cmd: command to find
-  * Return: On success - pointer to function, On Failure - NULL pointer
-*/
-int (*_builtin(char *cmd))()
+ * get_builtin - builtin that pais the command in the arg
+ * @cmd: command
+ * Return: function pointer of the builtin command
+ */
+int (*get_builtin(char *cmd))(data_shell *)
 {
-	unsigned int i;
-	builtin_t builds[] = {
-		{"alias", _alias},
-		{"cd", _cd},
-		{"env", _printenv},
-		{"exit", ourexit},
-		{"history", _history},
-		{"setenv", _setenv},
-		{"unsetenv", _unsetenv},
-		{NULL, NULL}
+	builtin_t builtin[] = {
+		{ "env", _env },
+		{ "exit", exit_shell },
+		{ "setenv", _setenv },
+		{ "unsetenv", _unsetenv },
+		{ "cd", cd_shell },
+		{ "help", get_help },
+		{ NULL, NULL }
 	};
-
-	i = 0;
-	while (*builds[i].fun != NULL)
-	{
-		if (_strncmp(builds[i].cmd_str, cmd, _strlen(builds[i].cmd_str)) == 0)
-			return (builds[i].fun);
-		i++;
-	}
-	return (NULL);
-}
-/**
-  * ourexit - Frees any remaining malloc'd spaces, and exits
-  * @linkedlist_path: Linked list to free.
-  * @buffer: buffer to free
-  * @tokens: Check for other inputs
-  * Return: -1 if exit fails.
-  */
-int ourexit(char **tokens, list_t *linkedlist_path, char *buffer)
-{
-	unsigned char status;
 	int i;
 
-	for (i = 0; tokens[1] && tokens[1][i]; i++)
+	for (i = 0; builtin[i].name; i++)
 	{
-		if (!(_isnumber(tokens[1][i])))
-		{
-			_puts("numeric argument required, exiting\n");
+		if (_strcmp(builtin[i].name, cmd) == 0)
 			break;
-		}
 	}
-	status = tokens[1] && i >= _strlen(tokens[1]) ? _atoi(tokens[1]) : 0;
-	if (linkedlist_path && buffer && tokens)
-	{
-		free_list(linkedlist_path);
-		linkedlist_path = NULL;
-		free(buffer);
-		buffer = NULL;
-		free(tokens);
-		tokens = NULL;
-	}
-	exit(status);
-	return (-1);
+
+	return (builtin[i].f);
 }
 
 /**
-  * _cd - changes working directory
-  * @tokens: argument list
-  * Return: 0 on success
-  */
-int _cd(char **tokens)
+ * cd_dot - changes to the parent directory
+ *
+ * @datash: data relevant (environ)
+ *
+ * Return: no return
+ */
+void cd_dot(data_shell *datash)
 {
-	char *target;
-	char pwd[BUFSIZE];
-	char *home;
+	char pwd[PATH_MAX];
+	char *dir, *cp_pwd, *cp_strtok_pwd;
 
-	home = _getenv("HOME");
-	if (tokens[1])
+	getcwd(pwd, sizeof(pwd));
+	cp_pwd = _strdup(pwd);
+	set_env("OLDPWD", cp_pwd, datash);
+	dir = datash->args[1];
+	if (_strcmp(".", dir) == 0)
 	{
-		if (tokens[1][0] == '~' && !tokens[1][1])
-			target = home;
-		else if (tokens[1][0] == '-' && !tokens[1][1])
-			target = _getenv("OLDPWD");
-		else
-			target = tokens[1];
+		set_env("PWD", cp_pwd, datash);
+		free(cp_pwd);
+		return;
+	}
+	if (_strcmp("/", cp_pwd) == 0)
+	{
+		free(cp_pwd);
+		return;
+	}
+	cp_strtok_pwd = cp_pwd;
+	rev_string(cp_strtok_pwd);
+	cp_strtok_pwd = _strtok(cp_strtok_pwd, "/");
+	if (cp_strtok_pwd != NULL)
+	{
+		cp_strtok_pwd = _strtok(NULL, "\0");
+
+		if (cp_strtok_pwd != NULL)
+			rev_string(cp_strtok_pwd);
+	}
+	if (cp_strtok_pwd != NULL)
+	{
+		chdir(cp_strtok_pwd);
+		set_env("PWD", cp_strtok_pwd, datash);
 	}
 	else
-		target = home;
-	if (target == home)
-		chdir(target);
-	else if (access(target, F_OK | R_OK) == 0)
-		chdir(target);
+	{
+		chdir("/");
+		set_env("PWD", "/", datash);
+	}
+	datash->status = 0;
+	free(cp_pwd);
+}
+
+/**
+ * cd_to - changes to a directory given
+ * by the user
+ *
+ * @datash: data relevant (directories)
+ * Return: no return
+ */
+void cd_to(data_shell *datash)
+{
+	char pwd[PATH_MAX];
+	char *dir, *cp_pwd, *cp_dir;
+
+	getcwd(pwd, sizeof(pwd));
+
+	dir = datash->args[1];
+	if (chdir(dir) == -1)
+	{
+		get_error(datash, 2);
+		return;
+	}
+
+	cp_pwd = _strdup(pwd);
+	set_env("OLDPWD", cp_pwd, datash);
+
+	cp_dir = _strdup(dir);
+	set_env("PWD", cp_dir, datash);
+
+	free(cp_pwd);
+	free(cp_dir);
+
+	datash->status = 0;
+
+	chdir(dir);
+}
+
+/**
+ * cd_previous - changes to the previous directory
+ *
+ * @datash: data relevant (environ)
+ * Return: no return
+ */
+void cd_previous(data_shell *datash)
+{
+	char pwd[PATH_MAX];
+	char *p_pwd, *p_oldpwd, *cp_pwd, *cp_oldpwd;
+
+	getcwd(pwd, sizeof(pwd));
+	cp_pwd = _strdup(pwd);
+
+	p_oldpwd = _getenv("OLDPWD", datash->_environ);
+
+	if (p_oldpwd == NULL)
+		cp_oldpwd = cp_pwd;
 	else
-		_puts("Could not find directory\n");
-	setenv("OLDPWD", _getenv("PWD"), 1);
-	setenv("PWD", getcwd(pwd, sizeof(pwd)), 1);
-	return (0);
+		cp_oldpwd = _strdup(p_oldpwd);
+
+	set_env("OLDPWD", cp_pwd, datash);
+
+	if (chdir(cp_oldpwd) == -1)
+		set_env("PWD", cp_pwd, datash);
+	else
+		set_env("PWD", cp_oldpwd, datash);
+
+	p_pwd = _getenv("PWD", datash->_environ);
+
+	write(STDOUT_FILENO, p_pwd, _strlen(p_pwd));
+	write(STDOUT_FILENO, "\n", 1);
+
+	free(cp_pwd);
+	if (p_oldpwd)
+		free(cp_oldpwd);
+
+	datash->status = 0;
+
+	chdir(p_pwd);
 }
 
+/**
+ * cd_to_home - changes to home directory
+ *
+ * @datash: data relevant (environ)
+ * Return: no return
+ */
+void cd_to_home(data_shell *datash)
+{
+	char *p_pwd, *home;
+	char pwd[PATH_MAX];
 
-/**
-  * _alias - sets aliases or prints them out when no options are supplied
-  * Return: 0
-  */
-int _alias(void)
-{
-	_puts("alias: usage: alias [-p] [name[=value] ... ]\n");
-	_puts("\tSet or view aliases.\n\tSet with name=value\n");
-	_puts("\tView list of aliases with no arugments or -p\n");
-	return (0);
-}
-/**
-  * _history - prints out history with no options,
-  *  or clears history with -c
-  * Return: 0 on success, 1 if history cannot be cleared.
-  */
-int _history(void)
-{
-	_puts("history: usage: history [-c]\n");
-	_puts("\tView the history of commands\n ");
-	_puts("\t'history -c' clears the history\n");
-	return (0);
+	getcwd(pwd, sizeof(pwd));
+	p_pwd = _strdup(pwd);
+
+	home = _getenv("HOME", datash->_environ);
+
+	if (home == NULL)
+	{
+		set_env("OLDPWD", p_pwd, datash);
+		free(p_pwd);
+		return;
+	}
+
+	if (chdir(home) == -1)
+	{
+		get_error(datash, 2);
+		free(p_pwd);
+		return;
+	}
+
+	set_env("OLDPWD", p_pwd, datash);
+	set_env("PWD", home, datash);
+	free(p_pwd);
+	datash->status = 0;
 }

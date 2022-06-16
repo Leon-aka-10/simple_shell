@@ -1,126 +1,66 @@
 #include "shell.h"
-/**
- * split_line - splits the data from standard input
- * @line: data from standard input
- * Return: an array of pointers if successful
-*/
-
-char **split_line(char *line)
-{
-	int bufsize = 1024, position = 0;
-	char *delimeter =  " \t\r\n\a";
-	char **tokens = malloc(bufsize * sizeof(char *));
-	char *token;
-	char *s = malloc(bufsize * sizeof(char));
-
-	_strcpy(s, line);
-
-	if (!tokens)
-	{
-		perror("allocation error");
-		exit(1);
-	}
-
-	token = strtok(s, delimeter);
-	/*free(s);*/
-	while (token != NULL)
-	{
-		tokens[position] = token;
-		position++;
-
-		if (position >= bufsize)
-		{
-			bufsize += 1024;
-			tokens = _realloc(*tokens, token[position], bufsize * sizeof(char *));
-			if (!tokens)
-			{
-				perror("allocation error");
-				exit(1);
-			}
-		}
-
-		token = strtok(NULL, delimeter);
-		/*free(tokens);*/
-		/*free_double_ptr(tokens);*/
-	}
-	tokens[position] = NULL;
-	return (tokens);
-}
-
 
 /**
-  * shell_exec - executes a command
-  * @argv: array of tokens, ie. argument vectors
-  * @linkedlist_path: PATH in LL form
-  * Return: 0 on success, -1 on failure
-  */
-int shell_exec(char *argv[], list_t *linkedlist_path)
-{
-	pid_t child_pid;
-	char *abs_path;
-	int status = 0;
-
-	if (access(argv[0], F_OK) == 0) /* check access to abs path */
-	{
-		abs_path = argv[0];
-		status = 1;
-	}
-	else /* if not, search through the path list */
-		abs_path = _which(argv[0], linkedlist_path);
-
-	if (access(abs_path, X_OK) != 0) /* if not, executable */
-	{
-		free_double_ptr(argv);
-		return (127);
-	}
-	else
-	{
-		child_pid = fork();
-		if (child_pid == 0)
-		{
-			if (execve(abs_path, argv, environ) == -1)
-			{
-				perror("execution failed\n");
-				__exit(argv, linkedlist_path);
-			}
-		}
-		else
-		{
-			wait(&status);
-			if (status == 0)
-				free(abs_path);
-		}
-
-	}
-	return (0);
-}
-
-
-/**
- * ctrl_c - ignore Ctrl-C input and prints prompt again
- * @n: takes in int from signal
+ * exec_line - finds builtins and commands
+ *
+ * @datash: data relevant (args)
+ * Return: 1 on success.
  */
-void ctrl_c(int n)
+int exec_line(data_shell *datash)
 {
-	(void)n;
-	write(STDOUT_FILENO, "\n$ ", 3);
-}
+	int (*builtin)(data_shell *datash);
 
+	if (datash->args[0] == NULL)
+		return (1);
+
+	builtin = get_builtin(datash->args[0]);
+
+	if (builtin != NULL)
+		return (builtin(datash));
+
+	return (cmd_exec(datash));
+}
 
 /**
- * ctrl_D - exits program if Ctrl-D was pressed
- * @i: characters read via get_line
- * @command: user's typed in command
- * @env: environmental variable linked list
+ * cd_shell - changes current directory
+ *
+ * @datash: data relevant
+ * Return: 1 on success
  */
-void ctrl_D(int i, char *command, list_t *env)
+int cd_shell(data_shell *datash)
 {
-	if (i == 0) /* handles Ctrl+D */
+	char *dir;
+	int ishome, ishome2, isddash;
+
+	dir = datash->args[1];
+
+	if (dir != NULL)
 	{
-		free(command); /* exit with newline if in shell */
-		free_list(env);
-		if (isatty(STDIN_FILENO))/* ctrl+d prints newline */
-			write(STDOUT_FILENO, "\n", 1);
-		exit(0);
+		ishome = _strcmp("$HOME", dir);
+		ishome2 = _strcmp("~", dir);
+		isddash = _strcmp("--", dir);
 	}
+
+	if (dir == NULL || !ishome || !ishome2 || !isddash)
+	{
+		cd_to_home(datash);
+		return (1);
+	}
+
+	if (_strcmp("-", dir) == 0)
+	{
+		cd_previous(datash);
+		return (1);
+	}
+
+	if (_strcmp(".", dir) == 0 || _strcmp("..", dir) == 0)
+	{
+		cd_dot(datash);
+		return (1);
+	}
+
+	cd_to(datash);
+
+	return (1);
 }
+

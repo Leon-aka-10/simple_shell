@@ -1,159 +1,112 @@
 #include "shell.h"
 
-
 /**
-  * add_node - adds a new node to the end of a linked list
-  * @head: head of the linked list
-  * @str: string
-  * @len: length of the string
-  * Return: pointer to the current position in the list
-  **/
-list_t *add_node(list_t **head, char *str, unsigned int len)
+ * add_sep_node_end - adds a separator found at the end
+ * of a sep_list.
+ * @head: head of the linked list.
+ * @sep: separator found (; | &).
+ * Return: address of the head.
+ */
+sep_list *add_sep_node_end(sep_list **head, char sep)
 {
-	list_t *new, *holder;
-	char *dupstr;
+	sep_list *new, *temp;
 
-	if (str == NULL)
-		return (NULL);
-	dupstr = strdup(str);
-	if (dupstr == NULL)
-	{
-		/*free(dupstr);*/
-		return (NULL);
-	}
-	new = malloc(sizeof(list_t));
+	new = malloc(sizeof(sep_list));
 	if (new == NULL)
 		return (NULL);
-	new->str = dupstr;
-	new->len = len;
-	new->next = NULL;
 
-	if (*head == NULL)
+	new->separator = sep;
+	new->next = NULL;
+	temp = *head;
+
+	if (temp == NULL)
 	{
 		*head = new;
-		return (*head);
 	}
-	holder = *head;
-	while (holder->next != NULL)
-		holder = holder->next;
-	holder->next = new;
-	/*free(dupstr);*/
+	else
+	{
+		while (temp->next != NULL)
+			temp = temp->next;
+		temp->next = new;
+	}
+
 	return (*head);
 }
-/**
-  * path_list - builds a linked list from PATH
-  * Return: pointer to linked list
-  */
-list_t *path_list(void)
-{
-	unsigned int len, i, j;
-	char *env;
-	char buffer[1024];
-	list_t *dir;
 
-	dir = NULL;
-	/*buffer = malloc(sizeof(char) * BUFSIZE);*/
-	len = i = j = 0;
-	env = _getenv("PATH");
-	while (*env)
+/**
+ * free_sep_list - frees a sep_list
+ * @head: head of the linked list.
+ * Return: no return.
+ */
+void free_sep_list(sep_list **head)
+{
+	sep_list *temp;
+	sep_list *curr;
+
+	if (head != NULL)
 	{
-		buffer[j++] = *env;
-		len++;
-		if (*env == ':')
+		curr = *head;
+		while ((temp = curr) != NULL)
 		{
-			len--;
-			buffer[j - 1] = '/';
-			buffer[j] = '\0';
-			add_node(&dir, buffer, len);
-			len = j = 0;
+			curr = curr->next;
+			free(temp);
 		}
-		env++;
-		/*free(buffer);*/
+		*head = NULL;
 	}
-	return (dir);
-}
-
-/**
-  * environ_list - builds a linked list from PATH
-  * Return: pointer to linked list
-  */
-list_t *environ_list(void)
-{
-	int i, j;
-	char **env;
-	list_t *path;
-
-	path = NULL;
-	i = j = 0;
-	env = environ;
-	while (env[i])
-	{
-		add_node(&path, env[i], (unsigned int)_strlen(env[i]));
-		i++;
-	}
-	return (path);
 }
 
 
-
 /**
- * _which - finds the path of a command
- * @cmd: command
- * @linkedlist_path: linked list from the PATH
- * Return: absolute path if successful, NULL otherwise
-*/
-
-char *_which(char *cmd, list_t *linkedlist_path)
+ * add_line_node_end - adds a command line at the end
+ * of a line_list.
+ * @head: head of the linked list.
+ * @line: command line.
+ * Return: address of the head.
+ */
+line_list *add_line_node_end(line_list **head, char *line)
 {
-	int status;
-	char *abs_path;
-	list_t *path;
+	line_list *new, *temp;
 
-	path = linkedlist_path;
-	if (path == NULL || cmd == NULL)
+	new = malloc(sizeof(line_list));
+	if (new == NULL)
 		return (NULL);
-	if ((_strncmp(cmd, "/", 1) == 0
-			|| _strncmp(cmd, "./", 2) == 0)
-			&& access(cmd, F_OK | X_OK) == 0)
+
+	new->line = line;
+	new->next = NULL;
+	temp = *head;
+
+	if (temp == NULL)
 	{
-		abs_path = _strdup(cmd);
-		return (abs_path);
-		/*free(abs_path);*/
+		*head = new;
 	}
-	while (path != NULL)
+	else
 	{
-		abs_path = strdup(path->str);
-		if (abs_path == NULL)
-		{
-			/*free(abs_path);*/
-			return (NULL);
-		}
-		/*free(abs_path);*/
-		abs_path = _strcat(abs_path, cmd);
-		if (abs_path == NULL)
-			return (NULL);
-		status = access(abs_path, F_OK | X_OK);
-		if (status == 0)
-			return (abs_path);
-		free(abs_path);
-		path = path->next;
+		while (temp->next != NULL)
+			temp = temp->next;
+		temp->next = new;
 	}
-	return (NULL);
+
+	return (*head);
 }
 
 /**
-  * free_list - frees a list
-  * @head: beginning of the list
-  */
-void free_list(list_t *head)
+ * free_line_list - frees a line_list
+ * @head: head of the linked list.
+ * Return: no return.
+ */
+void free_line_list(line_list **head)
 {
-	list_t *holder;
+	line_list *temp;
+	line_list *curr;
 
-	while (head != NULL)
+	if (head != NULL)
 	{
-		holder = head;
-		head = head->next;
-		free(holder->str);
-		free(holder);
+		curr = *head;
+		while ((temp = curr) != NULL)
+		{
+			curr = curr->next;
+			free(temp);
+		}
+		*head = NULL;
 	}
 }
