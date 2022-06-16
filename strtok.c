@@ -1,33 +1,56 @@
 #include "shell.h"
 
 /**
- * _strtok - tokenizes a string
- * @s: string to be tokenized
- * @del: delimitator for the tokens
- * Return: pointer to each token
+ * _strpbrk - searches through a string for any set of bytes.
+ * @s: string to search through
+ * @delims: bytes to search for in the string.
+ * Return: pointer to first occurence in s of anything in accept
  */
-char *_strtok(char *s, char *del)
+char *_strpbrk(char *s, char *delims)
 {
-	int c;
-	static char *str;
+	char *temp;
+
+	temp = delims;
+	for (; *s != '\0'; s++)
+	{
+		while (*delims != '\0')
+		{
+			if (*s == *delims)
+				return (s);
+			delims++;
+		}
+		delims = temp;
+	}
+	if (*s == '\0')
+		return (0);
+
+	return (s);
+}
+/**
+ * _strtok- replicates strtok, a tokenizer
+ * @s: string to be tokenized
+ * @delim: delimiter that determines where we split s
+ * (@save_ptr: saves index in tokenized s so that repeated
+ * fn calls fetch tokens
+ * Return: pointer to next token
+ */
+char *_strtok(char *s, char *delim)
+{
+	char *token;
 
 	if (s == NULL)
-		s = str;
-	c = *s++;
-	while (_strchr(del, c))
-	{
-		if (c == 0)
-			return (0);
-		c = *s++;
-	}
-	--s;
-	str = s + _strcspn(s, del);
-	if (*str)
-	{
-		*str = 0;
-		str++;
-	}
-	return (s);
+		return (NULL);
+
+	s += _strcspn(s, delim);
+	if (*s == '\0')
+		return (NULL);
+
+	token = s;
+	s = _strpbrk(token, delim);
+	if (s != NULL)
+		*s = '\0';
+
+	return (token);
 }
 /**
  * _strchr - locates character in string

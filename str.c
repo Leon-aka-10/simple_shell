@@ -1,31 +1,22 @@
 #include "shell.h"
 /**
- * _strcat - concatenates two strings
- * @str1: first string
- * @str2: second string to be concatenated
- * Return: pointer to the concatenated string
+ * _strcat - a function that concatenates two strings.
+ * @dest: an input string
+ * @src: an input string
+ * Return: A pointer to the resulting string
  */
-char *_strcat(char *str1, char *str2)
-{
-	char *concatstr;
-	int len1 = _strlen(str1), len2 = _strlen(str2), iter1, iter2;
 
-	concatstr = malloc(sizeof(char) * (len1 + len2 + 1));
-	if (!concatstr)
-	{
-		printf("Error: impossible to allocate memory");
-		exit(98);
-	}
-	for (iter1 = 0; str1[iter1] != '\0'; iter1++)
-	{
-		concatstr[iter1] = str1[iter1];
-	}
-	for (iter2 = 0; str2[iter2] != '\0'; iter2++)
-	{
-		concatstr[iter1 + iter2] = str2[iter2];
-	}
-	concatstr[iter1 + iter2] = '\0';
-	return (concatstr);
+char *_strcat(char *dest, char *src)
+{
+	int i = 0, j = 0;
+
+	while (dest[i++])
+		j++;
+
+	for (i = 0; src[i]; i++)
+		dest[j++] = src[i];
+
+	return (dest);
 }
 
 /**
